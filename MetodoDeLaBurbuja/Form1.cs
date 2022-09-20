@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Threading;
 
-
 namespace MetodoDeLaBurbuja
 {
     public partial class Form1 : Form
@@ -19,8 +18,9 @@ namespace MetodoDeLaBurbuja
             InitializeComponent();
         }
 
-        
+
         //List<int> arrayNum = null;
+        List<Datos> obj = new List<Datos>();
 
         
         int[] lolo = { 0, 2, 1, 5, };
@@ -66,7 +66,7 @@ namespace MetodoDeLaBurbuja
 
             Thread miHilo = new Thread(delegate ()
             {
-                burbuja_PWA_NADAQUEVER();
+                burbuja_PWA_NADAQUEVER_string();
                 if (listBox1.InvokeRequired)
                 {
                     listBox1.Invoke(new MethodInvoker(delegate
@@ -117,17 +117,24 @@ namespace MetodoDeLaBurbuja
 
             Thread miHilo = new Thread(delegate ()
             {
-                var ArregloMejorado = BurbujaMejorado_NADAQUEVER_PWA(arrayNum.ToArray());
-                if (listBox2.InvokeRequired)
+                var ArregloMejorado = BurbujaMejorado_NADAQUEVER_PWA_String();
+                if (ArregloMejorado != null)
                 {
-                    listBox2.Invoke(new MethodInvoker(delegate
+                    if (listBox2.InvokeRequired)
                     {
-                        foreach (int item in ArregloMejorado)
+                        listBox2.Invoke(new MethodInvoker(delegate
                         {
-                            listBox2.Items.Add(item);
-                        }
-                        listBox2.Items.Add("Terminó el proceso 2 JUAS JUAS");
-                    }));
+                            foreach (Datos item in ArregloMejorado)
+                            {
+                                listBox2.Items.Add(item.descripcion);
+                            }
+                            listBox2.Items.Add("Terminó el proceso 2 JUAS JUAS");
+                        }));
+                    }
+                }
+                else if(ArregloMejorado == null)
+                {
+                    listBox2.Items.Add("Anexa el XML Correspondiente");
                 }
             });
             miHilo.Start();
@@ -139,34 +146,36 @@ namespace MetodoDeLaBurbuja
             if (op.ShowDialog() == DialogResult.OK)
             {
                 string xmlFilePath = op.FileName;
-                using (DataSet ds = new DataSet())
+                using(DataSet ds = new DataSet())
                 {
                     ds.ReadXml(xmlFilePath);
                     dataGridView1.DataSource = ds.Tables[0];
-                    listBox1.DataSource = ds.Tables[0];
-                    listBox1.DisplayMember = "descripcion";
-                    listBox1.ValueMember = "descripcion";
-                    listBox2.DataSource = ds.Tables[0];
-                    listBox2.DisplayMember = "descripcion";
-                    listBox2.ValueMember = "descripcion";
-                    MessageBox.Show(ds.Tables[0].Rows.Count + " Total de registros cargados.");
+                    foreach (DataRow row in ds.Tables[0].Rows)
+                    {
+                        obj.Add(new Datos
+                        {
+                            id = row[0].ToString(),
+                            descripcion = row[1].ToString(),
+                            simbolo = row[2].ToString()
+                        });
+                    }
+                    MessageBox.Show(obj.Count + " Total de registros cargados.");
                 }
             }
         }
-
-        private List<string> arrayString = new List<string>();
         public void burbuja_PWA_NADAQUEVER_string()
         {
-            int numTemp;
-            for (int j = 0; j < arrayNum.Count; j++)
+            string numTemp;
+            Datos[] dts = obj.ToArray();
+            for (int j = 0; j < dts.Length; j++)
             {
-                for (int i = 0; i < arrayNum.Count - 1; i++)
+                for (int i = 0; i < dts.Length - 1; i++)
                 {
-                    if (arrayNum[i] > arrayNum[i + 1])
+                    if (dts[i].descripcion.CompareTo(dts[i + 1].descripcion) > 0)
                     {
-                        numTemp = arrayNum[i + 1];
-                        arrayNum[i + 1] = arrayNum[i];
-                        arrayNum[i] = numTemp;
+                        numTemp = dts[i + 1].descripcion;
+                        dts[i + 1].descripcion = dts[i].descripcion;
+                        dts[i].descripcion = numTemp;
                     }
                 }
             }
@@ -174,9 +183,45 @@ namespace MetodoDeLaBurbuja
             if (listBox1.InvokeRequired)
                 listBox1.Invoke(new MethodInvoker(delegate
                 {
-                    foreach (int p in arrayNum)
-                        listBox1.Items.Add(p.ToString());
+                    foreach (Datos p in dts)
+                        listBox1.Items.Add(p.descripcion.ToString());
                 }));
+        }
+
+        public Datos[] BurbujaMejorado_NADAQUEVER_PWA_String()
+        {
+            Datos[] n = obj.ToArray();
+            bool banderasJUASJUAS;
+            Datos temp;
+            int t, i;
+            t = n.Length;
+            banderasJUASJUAS = false;
+            i = 0;
+            while (!banderasJUASJUAS)
+            {
+                banderasJUASJUAS = true;
+                {
+                    for (int j = t - 1; j > i; j--)
+                    {
+                        if (n[j].descripcion.CompareTo(n[j - 1].descripcion) < 0)
+                        {
+                            temp = n[j];
+                            n[j] = n[j - 1];
+                            n[j - 1] = temp;
+                            banderasJUASJUAS = false;
+                        }
+                    }
+                }
+                i++;
+            }
+            return n;
+        }
+
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            button2.Enabled = false;
+            textBox1.Enabled = false;
         }
     }
 }
